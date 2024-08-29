@@ -280,7 +280,7 @@ menu = {
 order=[]
 
 # Launch the store and present a greeting to the customer
-print("Welcome to Mo's food truck.")
+print("Welcome toMo's food truck.")
 
 # Customers may want to order multiple items, so let's create a continuous
 # loop
@@ -325,8 +325,8 @@ while place_order:
             print("-------|--------------------------|-------")
             for key, value in menu[menu_category_name].items():
                 # Check if the menu item is a dictionary to handle differently
-                if type(value) is dict:
-                    # check if the menu item has a nested dictionary (like pizza has different types)
+                if isinstance(value, dict):
+                    # check if the ment item has a nested dictionary (like pizza has different types)
                     if "Price" in value:
                         # Item with price and nutritional info
                         num_item_spaces = 24 - len(key)
@@ -344,9 +344,7 @@ while place_order:
                     else:
                         #item with sub-items (like pizza)
                         for sub_key, sub_value in value.items():
-                            num_item_spaces = 24 - len(key + sub_key)
-                            item_spaces = " " * num_item_spaces
-
+                            num_item_spaces = 24 - len(key + sub_key) - 3
                             print(f"{i}      | {key} - {sub_key}{item_spaces} | ${sub_value['Price']}")
                             print(f"        Calories: {sub_value['Nutritional Info']['Calories']} kcal")
                             print(f"        Carbs: {sub_value['Nutritional Info']['Carbs']} g")
@@ -377,11 +375,10 @@ while place_order:
 
                 # 4. Check if the menu selection is in the menu items
                 if menu_selection in menu_items:
-                    # Store the selected item
+                    # Store the item name as a variable
                     selected_item = menu_items[menu_selection]
                     item_name = selected_item["Item name"]
                     item_price = selected_item["Price"]
-
                     # Ask the customer for the quantity of the menu item
                     quantity = input(f"How many {item_name}(s) would you like to order? ")
 
@@ -390,57 +387,24 @@ while place_order:
                         quantity = int(quantity)
                     else:
                         quantity = 1
+                    # Add the item name, price, and quantity to the order list
+                    order.append({
+                        "Item name": item_name,
+                        "Price": item_price,
+                        "Quantity": quantity
+                    })
 
-                    # Determine the correct nutritional info for the item
-                    found = False
-                    nutrition = {}  # Initialize an empty dictionary for nutrition
+                    # Tell the customer that their input isn't valid
 
-                    # First, check if the item is a sub-item within a main category
-                    if " - " in item_name:
-                        main_item, sub_item = item_name.split(" - ")
-                        if main_item in menu[menu_category_name]:  # Check if main_item exists in the selected category
-                            if sub_item in menu[menu_category_name][main_item]:
-                                print(f"Found {item_name} under {main_item}.")
-                                nutrition = menu[menu_category_name][main_item][sub_item]["Nutritional Info"]
-                                found = True
-                    else:
-                        # Check if the item is a direct item (like "Burrito")
-                        if item_name in menu[menu_category_name]:
-                            print(f"Found {item_name} directly in {menu_category_name}.")
-                            nutrition = menu[menu_category_name][item_name]["Nutritional Info"]
-                            found = True
 
-                    if not found:
-                        print(f"Item {item_name} not found in the menu.")
-                    
-                    # check if the item already exists in the order
-                    item_exists = False
-                    for existing_item in order:
-                        if existing_item["Item name"] == item_name and existing_item["Category"] == menu_category_name:
-                            # Item exists, update the quantity
-                            existing_item["Quantity"] += quantity
-                            item_exists = True
-                            break
+                # Tell the customer they didn't select a menu option
 
-                    # If the item doesn't exist, add it to the order
-                    if not item_exists:
-                        order.append({
-                            "Item name": item_name,
-                            "Category": menu_category_name,
-                            "Price": item_price,
-                            "Quantity": quantity,
-                            "Nutritional Info": nutrition  # Include nutritional info directly in the order
-                        })
-
-                else:
-                    # Tell the customer they didn't select a menu option
-                    print(f"{menu_selection} was not a menu option.")
-            else:
-                # Tell the customer they didn't select a number
-                print("You didn't select a number.")
         else:
-            # Tell the customer they didnt select a valid menu category
-            print(f"{menu_category} was not a valid menu category.")
+            # Tell the customer they didn't select a menu option
+            print(f"{menu_category} was not a menu option.")
+    else:
+        # Tell the customer they didn't select a number
+        print("You didn't select a number.")
 
     while True:
         # Ask the customer if they would like to order anything else
@@ -454,90 +418,77 @@ while place_order:
                     break
                 # Complete the order
                 case "n":
-                    # Since the customer decided to stop ordering, thank them for
-                    # their order
-                    if not order:
-                        # if the order list is empty, ask if they are sure they want to exit
-                        sure = input("You have not ordered anything. Are you sure you want to exit? (Y)es or (N)o ")
-                        if sure.lower() == "y":
-                            import random
-                            discount_code = random.randint(1000000, 9999999)
-                            print(f"We appreciate you for visiting, if you come back again, your discount code for 10 percent is: {discount_code}")
-                            place_order = False
-                        else:
-                            #if they say no, continue ordering
-                            print("Great! Let's continue ordering.")
-                    else:
-                        print("Great food made with Love is on the way! We appreciate you!")
-                        place_order = False
+                # Since the customer decided to stop ordering, thank them for
+                # their order
+                    print("Great food made with Love is on the way! We appreciate you!")
+                    place_order = False
+                # Exit the keep ordering question loop
                     break
                 # Tell the customer to try again
                 case _:
                     print("Please type 'Y'for yes or 'N' for no.")
-if order:
-    # Print out the customer's order
-    print("This is what we are preparing for you.\n")
-    max_item_name_len = max(len(item["Item name"]) for item in order)
-    max_price_len = max(len(f"{item['Price']:.2f}") for item in order)
 
-    # Uncomment the following line to check the structure of the order
-    #print(order)
+# Print out the customer's order
+print("This is what we are preparing for you.\n")
 
-    print(f"{'Item name':<{max_item_name_len}} | {'Price':<{max_price_len}} | Quantity")
-    print("-" * (max_item_name_len + max_price_len + 12))  # Adjusted width for dashes
+# Uncomment the following line to check the structure of the order
+#print(order)
 
-    total_calories = 0
-    total_carbs = 0
-    total_fats = 0
-    total_protein = 0
+print("Item name                 | Price  | Quantity")
+print("--------------------------|--------|----------")
 
-    # 6. Loop through the items in the customer's order
-    for item in order:
-        # 7. Store the dictionary items as variables
-        item_name = item["Item name"]
-        item_price = item["Price"]
-        quantity = item["Quantity"]
-        nutrition = item["Nutritional Info"]  # Retrieve the nutritional info directly from the order item
+total_calories = 0
+total_carbs = 0
+total_fats = 0
+total_protein = 0
 
-        # Print the item name, price, and quantity
-        # 8. Calculate the number of spaces for formatted printing
-        item_name_spaces = ' ' * (max_item_name_len - len(item_name))
-        price_spaces = ' ' * (max_price_len - len(f"{item_price:.2f}"))
-        
-        # 9. Print the item name, price, and quantity with calculated spaces
-        # 10. Print the item name, price, and quantity
-        print(f"{item_name}{item_name_spaces} | ${item_price:.2f}{price_spaces} | {quantity}")
-        
+# 6. Loop through the items in the customer's order
+for item in order:
+    # 7. Store the dictionary items as variables
+    item_name = item["Item name"]
+    item_price = item["Price"]
+    quantity = item["Quantity"]
 
-        if nutrition:
-            # Calculate totals based on the nutritional info
-            #print(f"Nutritional info for {item_name}: {nutrition}")
-            total_calories += nutrition.get("Calories", 0) * quantity
-            total_carbs += nutrition.get("Carbs", 0) * quantity
-            total_fats += nutrition.get("Fats", 0) * quantity
-            total_protein += nutrition.get("Protein", 0) * quantity
-        else:
-            print(f"Nutritional information for {item_name} not found.")
+    # 8. Calculate the number of spaces for formatted printing
+    num_item_spaces = 24 - len(item_name)
+   
+    # 9. Create space strings
+    price_spaces = 4 - len(str(item_price))
+    quantity_spaces = 8 - len(str(quantity))
 
-    # 11. Calculate the cost of the order using list comprehension
-    total_cost = sum(item["Price"] * item["Quantity"] for item in order)
-    print(f"\nTotal: ${total_cost:.2f}")
+    # 10. Print the item name, price, and quantity
+    print(f"{item_name}{' ' * num_item_spaces}| ${item_price}{' ' * price_spaces}| {quantity}{' ' * quantity_spaces}")
+    # calculate the total nutritional info based on items and quantities
+    for category in menu.values(): 
+        print("Category: ")
+        print(category)
+        if isinstance(category, dict) and item_name in category:
+            nutrition = category[item_name]["Nutritional Info"]
+            if nutrition:
+                total_calories += nutrition["Calories"] * quantity
+                total_carbs += nutrition["Carbs"] * quantity
+                total_fats += nutrition["Fats"] * quantity
+                total_protein += nutrition["Protein"] * quantity
 
-    # Calculate the percentages of each macronutrient
-    if total_calories > 0:
-        total_calories_from_carbs = total_carbs * 4  # 1g of carbs = 4 calories
-        total_calories_from_fats = total_fats * 9    # 1g of fat = 9 calories
-        total_calories_from_protein = total_protein * 4  # 1g of protein = 4 calories
+# 11. Calculate the cost of the order using list comprehension
+# Multiply the price by quantity for each item in the order list, then sum()
+# and print the prices.
+total_cost = sum(item["Price"] * item["Quantity"] for item in order)
+print(f"\nTotal: ${total_cost:.2f}")
 
-        carbs_percentage = (total_calories_from_carbs / total_calories) * 100
-        fats_percentage = (total_calories_from_fats / total_calories) * 100
-        protein_percentage = (total_calories_from_protein / total_calories) * 100
-    else:
-        carbs_percentage = fats_percentage = protein_percentage = 0
+# Calculate the percentages of each macronutrient
+total_calories_from_carbs = total_carbs * 4  # 1g of carbs = 4 calories
+total_calories_from_fats = total_fats * 9    # 1g of fat = 9 calories
+total_calories_from_protein = total_protein * 4  # 1g of protein = 4 calories
 
-    # Display the total nutritional information
-    print("\nTotal Nutritional Information for Your Order:")
-    print(f"Total Calories: {total_calories} kcal")
-    print(f"Total Carbs: {total_carbs} g ({carbs_percentage:.2f}% of total calories)")
-    print(f"Total Fats: {total_fats} g ({fats_percentage:.2f}% of total calories)")
-    print(f"Total Protein: {total_protein} g ({protein_percentage:.2f}% of total calories)")
+carbs_percentage = (total_calories_from_carbs / total_calories) * 100
+fats_percentage = (total_calories_from_fats / total_calories) * 100
+protein_percentage = (total_calories_from_protein / total_calories) * 100
+
+# Display the total nutritional information
+print("\nTotal Nutritional Information for Your Order:")
+print(f"Total Calories: {total_calories} kcal")
+print(f"Total Carbs: {total_carbs} g ({carbs_percentage:.2f}% of total calories)")
+print(f"Total Fats: {total_fats} g ({fats_percentage:.2f}% of total calories)")
+print(f"Total Protein: {total_protein} g ({protein_percentage:.2f}% of total calories)")
+
